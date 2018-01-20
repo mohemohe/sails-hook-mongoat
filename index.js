@@ -54,25 +54,38 @@ module.exports = function (sails) {
     createIndex: function (modelName, fields, options, next) {
       var model = sails.models[modelName];
       // check model adapter is sails-mongo by checking first connections adapter -- is this the best way?
-      if (model && model._adapter.datastores[Object.keys(model._adapter.datastores)[0]].config.adapter == 'sails-mongo')
+      if (model && _.isFunction(model.native)) {
         model.native(function (err, collection) {
-          collection.ensureIndex(fields, options, function (err) {
-            if (err) {
-              sails.log.error('Mongoat: Error creating index for model', modelName);
-              sails.log.error(fields);
-              sails.log.error(err);
-            }
-            else
-              sails.log.verbose('Mongoat: An index was created for model', modelName);
-
-            if (_.isFunction(next))
+          if (err) {
+            sails.log.error('Mongoat: Could not connect to MongoDB', modelName);
+            if (_.isFunction(next)) {
               next(err);
-
-          });
+            }
+          } else {
+            if(_.isFunction(collection.ensureIndex)) {
+              collection.ensureIndex(fields, options, function (err) {
+                if (err) {
+                  sails.log.error('Mongoat: Error creating index for model', modelName);
+                  sails.log.error(fields);
+                  sails.log.error(err);
+                } else {
+                  sails.log.verbose('Mongoat: An index was created for model', modelName);
+                }
+                if (_.isFunction(next)) {
+                  next(err);
+                }
+              });
+            } else {
+              sails.log.error('Mongoat: Native collection is not function', modelName);
+              if (_.isFunction(next)) {
+                next(err);
+              }
+            }
+          }
         });
-      else {
+      } else {
         if (_.isFunction(next))
-          next('Model not provided or model adapter is not sails-mongo.')
+          next('Model not provided or model adapter is not provided native collection.')
       }
     },
     initialize: function (cb) {
@@ -98,8 +111,6 @@ module.exports = function (sails) {
           });
         });
       });
-
-
     }
   };
 };
