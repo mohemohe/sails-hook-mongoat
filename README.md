@@ -1,3 +1,9 @@
+### DISCONTINUED
+
+moved: https://github.com/mobilusoss/sails-hook-mongoat
+
+----
+
 # sails-hook-mongoat
 [![NPM version][npm-image]][npm-url]
 [![Build status][travis-image]][travis-url]
